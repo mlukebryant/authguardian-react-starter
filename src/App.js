@@ -10,6 +10,7 @@ import {
   HttpLink
 } from "@apollo/client";
 import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client";
 
 import OneGraphApolloClient from "onegraph-apollo-client";
 
@@ -174,6 +175,7 @@ function App() {
           }
           readOnly={true}
         ></textarea>
+        <Schema />
         <button
           onClick={() => {
             auth.destroy();
@@ -231,7 +233,18 @@ function App() {
 }
 
 function Schema() {
-  const { loading, error, data } = useQuery(GET_DOGS);
+  const GET_SCHEMA = gql`
+    {
+      __schema {
+        queryType {
+          fields {
+            name
+          }
+        }
+      }
+    }
+  `;
+  const { loading, error, data } = useQuery(GET_SCHEMA);
 
   if (loading) return "Loading...";
   if (error) return `Error! ${error.message}`;
@@ -240,7 +253,7 @@ function Schema() {
     <textarea
       className="jwt-preview"
       rows={15}
-      value={schema}
+      value={data?.__schema.queryType.fields.map((field) => field.name)}
       readOnly={true}
     ></textarea>
   );

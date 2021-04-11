@@ -121,7 +121,7 @@ function App() {
     cache: new InMemoryCache()
   });
 
-  client
+  const schema = client
     .query({
       query: gql`
         {
@@ -230,4 +230,19 @@ function App() {
   );
 }
 
+function Schema() {
+  const { loading, error, data } = useQuery(GET_DOGS);
+
+  if (loading) return "Loading...";
+  if (error) return `Error! ${error.message}`;
+
+  return (
+    <textarea
+      className="jwt-preview"
+      rows={15}
+      value={schema}
+      readOnly={true}
+    ></textarea>
+  );
+}
 export default App;

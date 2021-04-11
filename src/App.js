@@ -3,11 +3,33 @@ import logo from "./logo.svg";
 import OneGraphAuth from "onegraph-auth";
 import fetchSupportedServicesQuery from "./fetchSupportedServices.js";
 import "./App.css";
+import {
+  ApolloClient,
+  ApolloProvider,
+  InMemoryCache,
+  HttpLink
+} from "@apollo/client";
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client";
 
-const appId = process.env.REACT_APP_ONE_GRAPH_APP_ID;
+import OneGraphApolloClient from "onegraph-apollo-client";
+
+const createApolloClient = (authToken) => {
+  return new ApolloClient({
+    link: new HttpLink({
+      uri: "https://hasura.io/learn/graphql",
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      }
+    }),
+    cache: new InMemoryCache()
+  });
+};
+
+const appId = "beea809f-866b-43cb-883a-dce32d18c155";
 
 const auth = new OneGraphAuth({
-  appId: appId,
+  appId: appId
 });
 
 const gitHubLink =
@@ -46,82 +68,10 @@ const ${componentName} = ({ oneGraphAuth, onLogin }) => {
 `;
 };
 
-function corsPrompt(appId) {
-  const origin = window.location.origin;
-
-  return (
-    <nav className="cors-prompt">
-      <ul>
-        <li>
-          <a
-            className="App-link"
-            href={`https://www.onegraph.com/dashboard/app/${appId}?add-cors-origin=${origin}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Please click here to add {origin} to your allowed CORS origins and
-            then refresh
-          </a>
-        </li>
-      </ul>
-    </nav>
-  );
-}
-
-const gitHubIcon = (
-  <svg
-    role="img"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-    width="20px"
-    height="20px"
-  >
-    <title>GitHub icon</title>
-    <path
-      fill="white"
-      d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
-    />
-  </svg>
-);
-
-function navBar(appId) {
-  return (
-    <nav>
-      <ul>
-        <li>
-          <a
-            className="App-link"
-            href={`https://www.onegraph.com/dashboard/app/${appId}/auth/auth-guardian`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Edit your rules
-          </a>
-        </li>
-        <li>
-          <a
-            className="App-link"
-            href="https://www.onegraph.com/docs/auth_guardian.html"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            AuthGuardian Docs
-          </a>
-        </li>
-        <li>
-          <a href={gitHubLink} target="_blank" rel="noopener noreferrer">
-            {gitHubIcon}
-          </a>
-        </li>
-      </ul>
-    </nav>
-  );
-}
-
 function App() {
   const [state, setState] = useState({
     supportedServices: [],
-    corsConfigurationRequired: null,
+    corsConfigurationRequired: null
   });
 
   useEffect(() => {
@@ -131,7 +81,7 @@ function App() {
         setState((oldState) => {
           return {
             ...oldState,
-            supportedServices: supportedServices,
+            supportedServices: supportedServices
           };
         });
       })
@@ -148,7 +98,45 @@ function App() {
       });
   }, []);
 
+  const auth = new OneGraphAuth({
+    appId: appId
+  });
   const accessToken = auth.accessToken();
+  console.log(accessToken);
+
+  // const client = new ApolloClient({
+  //   headers: {
+  //     Authorization: `Bearer ${accessToken}`
+  //   },
+  //   cache: new InMemoryCache(),
+  //   link: new HttpLink({
+  //     uri: "https://precious-flounder-61.hasura.app/v1/graphql",
+  //   }),
+  // });
+
+  const client = new ApolloClient({
+    uri: "https://precious-flounder-61.hasura.app/v1/graphql",
+    headers: {
+      Authorization: `Bearer ${accessToken.accessToken}`
+    },
+    cache: new InMemoryCache()
+  });
+
+  const schema = client
+    .query({
+      query: gql`
+        {
+          __schema {
+            queryType {
+              fields {
+                name
+              }
+            }
+          }
+        }
+      `
+    })
+    .then((result) => console.log(result));
 
   let decoded = null;
 
@@ -164,7 +152,6 @@ function App() {
 
   return (
     <div className="App">
-      {state.corsConfigurationRequired ? corsPrompt(appId) : navBar(appId)}
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>
@@ -188,6 +175,7 @@ function App() {
           }
           readOnly={true}
         ></textarea>
+        <Schema />
         <button
           onClick={() => {
             auth.destroy();
@@ -211,7 +199,7 @@ function App() {
                     return {
                       ...oldState,
                       [service.slug]: isLoggedIn,
-                      mostRecentService: service,
+                      mostRecentService: service
                     };
                   });
                 }}
@@ -244,4 +232,30 @@ function App() {
   );
 }
 
+function Schema() {
+  const GET_SCHEMA = gql`
+    {
+      __schema {
+        queryType {
+          fields {
+            name
+          }
+        }
+      }
+    }
+  `;
+  const { loading, error, data } = useQuery(GET_SCHEMA);
+
+  if (loading) return "Loading...";
+  if (error) return `Error! ${error.message}`;
+
+  return (
+    <textarea
+      className="jwt-preview"
+      rows={15}
+      value={data?.__schema.queryType.fields.map((field) => field.name)}
+      readOnly={true}
+    ></textarea>
+  );
+}
 export default App;

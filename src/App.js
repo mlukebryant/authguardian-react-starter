@@ -193,6 +193,7 @@ function App() {
                 key={service.slug}
                 className="service-button"
                 onClick={async () => {
+                  console.log(service);
                   await auth.login(service.slug);
                   const isLoggedIn = await auth.isLoggedIn(service.slug);
                   setState((oldState) => {

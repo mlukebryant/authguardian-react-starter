@@ -29,10 +29,42 @@ const client = new ApolloClient({
   cache: new InMemoryCache()
 });
 
+const OneGraphWrapper = ({ oneGraphAuth, onLogin }) => {
+  const service = {
+    service: "GITHUB",
+    friendlyServiceName: "GitHub",
+    slug: "github",
+    supportsOauthLogin: true,
+    supportsCustomServiceAuth: true
+  };
+  return (
+    <button
+      onClick={async () => {
+        await oneGraphAuth.login(`${service.slug}`);
+        const isLoggedIn = await oneGraphAuth.isLoggedIn(`${service.slug}`);
+        if (isLoggedIn) {
+          onLogin();
+        }
+      }}
+    >
+      Log in with {service.friendlyServiceName}
+    </button>
+  );
+};
+
 ReactDOM.render(
-  <ApolloProvider client={client}>
-    <App />,
-  </ApolloProvider>,
+  <OneGraphWrapper
+    oneGraphAuth={auth}
+    onLogin={() =>
+      console.log(
+        "User has successfully logged into ${service.friendlyServiceName}."
+      )
+    }
+  >
+    <ApolloProvider client={client}>
+      <App />
+    </ApolloProvider>
+  </OneGraphWrapper>,
   document.getElementById("root")
 );
 
